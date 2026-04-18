@@ -6,6 +6,7 @@ import {
 	ArrowRight,
 	CreditCard,
 	ExternalLink,
+	LayoutTemplate,
 	Sparkles,
 	Wallet,
 	Zap,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { CreatorDashboardPayload } from "@/actions/dashboard"
 import type { SerializedTip } from "@/lib/serialize-tip"
+import { RaisedChart } from "@/components/home/raised-chart"
 
 function formatUsd(cents: number) {
 	return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -43,7 +45,14 @@ function TipRow({ tip }: { tip: SerializedTip }) {
 				{tip.supporter?.name || tip.supporter?.email || tip.tipperWallet || "Anonymous"}
 			</td>
 			<td className="hidden py-3 text-sm text-muted-foreground sm:table-cell">
-				{tip.campaign?.title ?? "—"}
+				{tip.badge ? (
+					<span>
+						{tip.badge.emoji ? `${tip.badge.emoji} ` : ""}
+						{tip.badge.name}
+					</span>
+				) : (
+					(tip.campaign?.title ?? "—")
+				)}
 			</td>
 			<td className="py-3 text-right text-xs text-muted-foreground">
 				{new Date(tip.createdAt).toLocaleDateString()}
@@ -53,7 +62,7 @@ function TipRow({ tip }: { tip: SerializedTip }) {
 }
 
 export function CreatorHome({ initial }: { initial: CreatorDashboardPayload }) {
-	const { profile, stats, recentTips, campaigns } = initial
+	const { profile, stats, recentTips, campaigns, raisedByDay } = initial
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -74,11 +83,20 @@ export function CreatorHome({ initial }: { initial: CreatorDashboardPayload }) {
 							</p>
 						</div>
 						<div className="flex flex-wrap gap-2">
+							<Button asChild variant="secondary" className="gap-2">
+								<Link href="/studio">
+									<LayoutTemplate className="h-4 w-4" />
+									Studio & preview
+								</Link>
+							</Button>
 							<Button asChild className="gap-2">
 								<Link href="/campaigns?new=1">
 									<Sparkles className="h-4 w-4" />
 									New campaign
 								</Link>
+							</Button>
+							<Button variant="outline" asChild className="gap-2">
+								<Link href="/badges">Badges</Link>
 							</Button>
 							{profile && (
 								<Button variant="outline" asChild className="gap-2">
@@ -140,6 +158,18 @@ export function CreatorHome({ initial }: { initial: CreatorDashboardPayload }) {
 							</motion.div>
 						))}
 					</div>
+
+					<section className="mt-10 rounded-2xl border border-border bg-card p-5 shadow-sm">
+						<div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+							<div>
+								<h2 className="text-sm font-semibold">Raised (card, last 30 days)</h2>
+								<p className="text-xs text-muted-foreground">
+									USD from Stripe — SOL tips are listed separately in the table.
+								</p>
+							</div>
+						</div>
+						<RaisedChart data={raisedByDay} />
+					</section>
 				</div>
 			</div>
 
@@ -161,7 +191,7 @@ export function CreatorHome({ initial }: { initial: CreatorDashboardPayload }) {
 										<th className="px-4 py-2">Rail</th>
 										<th className="px-4 py-2">Amount</th>
 										<th className="px-4 py-2">From</th>
-										<th className="hidden px-4 py-2 sm:table-cell">Campaign</th>
+										<th className="hidden px-4 py-2 sm:table-cell">Campaign / badge</th>
 										<th className="px-4 py-2 text-right">Date</th>
 									</tr>
 								</thead>

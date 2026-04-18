@@ -20,3 +20,4 @@ export {
 } from "./campaigns"
 export { listSupporterActivityTips } from "./tips"
 export { createTipCheckoutSession } from "./checkout"
+export { uploadImageToCloudinary, deleteImageFromCloudinary } from "./shared/upload.action"

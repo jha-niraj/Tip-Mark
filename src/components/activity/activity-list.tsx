@@ -34,6 +34,12 @@ export function ActivityList({ tips }: { tips: SerializedTip[] }) {
 							<Badge variant="outline" className="text-[10px]">
 								{tip.rail}
 							</Badge>
+							{tip.badge && (
+								<Badge className="text-[10px]">
+									{tip.badge.emoji ? `${tip.badge.emoji} ` : ""}
+									{tip.badge.name}
+								</Badge>
+							)}
 							<span className="font-medium">
 								{tip.creatorDisplayName || tip.creatorSlug || "Creator"}
 							</span>

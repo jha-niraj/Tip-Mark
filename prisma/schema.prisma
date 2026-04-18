@@ -61,9 +61,31 @@ model CreatorProfile {
 
     user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     campaigns Campaign[]
-    tips      Tip[]      @relation("TipsToCreator")
+    tips      Tip[]         @relation("TipsToCreator")
+    badges    CreatorBadge[]
 
     @@map("creator_profiles")
+}
+
+/// Fixed-price tiers supporters can pick on the public page (card tips).
+model CreatorBadge {
+    id               String @id @default(cuid())
+    creatorProfileId String
+    name             String
+    description      String?
+    /// Price in USD cents (e.g. 500 = $5.00).
+    amountCents      Int
+    /// Optional short label for UI (emoji or initials).
+    emoji            String?
+    sortOrder        Int    @default(0)
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @updatedAt
+
+    creatorProfile CreatorProfile @relation(fields: [creatorProfileId], references: [id], onDelete: Cascade)
+    tips           Tip[]
+
+    @@index([creatorProfileId])
+    @@map("creator_badges")
 }
 
 enum CampaignStatus {
@@ -131,6 +153,9 @@ model Tip {
     message   String?
     badgeTier String?
     nftMint   String?
+
+    creatorBadgeId String?
+    creatorBadge   CreatorBadge? @relation(fields: [creatorBadgeId], references: [id], onDelete: SetNull)
 
     status    TipStatus @default(PENDING)
     createdAt DateTime  @default(now())

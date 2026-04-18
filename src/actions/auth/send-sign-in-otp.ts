@@ -27,7 +27,7 @@ export async function sendSignInOtp(email: string): Promise<SendSignInOtpResult>
 		})
 
 		await resend.emails.send({
-			from: "TipMark <noreply@tipmark.xyz>",
+			from: process.env.RESEND_FROM_EMAIL as string,
 			to: email,
 			subject: `${code} — your TipMark sign-in code`,
 			html: `

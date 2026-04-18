@@ -13,7 +13,12 @@ export async function listSupporterActivityTips() {
 		where: { supporterUserId: session.user.id },
 		orderBy: { createdAt: "desc" },
 		take: 200,
-		include: { campaign: true, creatorProfile: true, supporter: true },
+		include: {
+			campaign: true,
+			creatorProfile: true,
+			supporter: true,
+			creatorBadge: true,
+		},
 	})
 
 	return tips.map((t) => serializeTip(t))

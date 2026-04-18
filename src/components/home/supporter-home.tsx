@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRight, Heart, Sparkles } from "lucide-react"
+import { ArrowRight, Award, Heart, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { SupporterDashboardPayload } from "@/actions/dashboard"
@@ -13,7 +13,7 @@ function formatUsd(cents: number) {
 }
 
 export function SupporterHome({ initial }: { initial: SupporterDashboardPayload }) {
-	const { stats, recentTips } = initial
+	const { stats, recentTips, badgeEarned } = initial
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -72,6 +72,57 @@ export function SupporterHome({ initial }: { initial: SupporterDashboardPayload 
 			</div>
 
 			<main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+				<section className="mb-12">
+					<div className="mb-4 flex items-center gap-2">
+						<Award className="h-5 w-5 text-primary" />
+						<h2 className="text-lg font-semibold">Badges you&apos;ve earned</h2>
+					</div>
+					{badgeEarned.length === 0 ? (
+						<div className="rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-10 text-center text-sm text-muted-foreground">
+							When you pay for a creator&apos;s badge tier with a card, it shows up here.
+							Custom amounts without a badge stay in your activity feed only.
+						</div>
+					) : (
+						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+							{badgeEarned.map((b, i) => (
+								<motion.div
+									key={b.tipId}
+									initial={{ opacity: 0, y: 8 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ delay: 0.04 * i }}
+									className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+								>
+									<div className="flex items-start justify-between gap-2">
+										<div>
+											<p className="text-2xl leading-none">
+												{b.badgeEmoji ? `${b.badgeEmoji} ` : ""}
+												<span className="font-semibold">{b.badgeName}</span>
+											</p>
+											<p className="mt-2 text-xs text-muted-foreground">
+												From{" "}
+												<Link
+													href={`/u/${b.creatorSlug}`}
+													className="font-medium text-primary underline-offset-4 hover:underline"
+												>
+													{b.creatorDisplayName ?? b.creatorSlug}
+												</Link>
+											</p>
+										</div>
+										<Badge variant="secondary" className="shrink-0 text-[10px]">
+											{formatUsd(b.amountCents)}
+										</Badge>
+									</div>
+									<p className="mt-3 text-[11px] text-muted-foreground">
+										{new Date(b.earnedAt).toLocaleDateString(undefined, {
+											dateStyle: "medium",
+										})}
+									</p>
+								</motion.div>
+							))}
+						</div>
+					)}
+				</section>
+
 				<h2 className="mb-4 text-lg font-semibold">Recent tips</h2>
 				<div className="overflow-hidden rounded-2xl border border-border">
 					<div className="divide-y divide-border">
@@ -90,10 +141,16 @@ export function SupporterHome({ initial }: { initial: SupporterDashboardPayload 
 									className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
 								>
 									<div>
-										<div className="flex items-center gap-2">
+										<div className="flex flex-wrap items-center gap-2">
 											<Badge variant="secondary" className="text-[10px]">
 												{tip.rail}
 											</Badge>
+											{tip.badge && (
+												<Badge className="text-[10px]">
+													{tip.badge.emoji ? `${tip.badge.emoji} ` : ""}
+													{tip.badge.name}
+												</Badge>
+											)}
 											<span className="font-medium">
 												{tip.creatorDisplayName || tip.creatorSlug || "Creator"}
 											</span>

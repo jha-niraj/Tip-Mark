@@ -55,7 +55,7 @@ export async function getCreatorProfileForUser() {
 export type UpdateCreatorProfileInput = {
 	displayName?: string
 	bio?: string
-	avatarUrl?: string
+	avatarUrl?: string | null
 	slug?: string
 	solanaWallet?: string | null
 }
@@ -92,13 +92,15 @@ export async function updateCreatorProfile(input: UpdateCreatorProfileInput) {
 		},
 	})
 	revalidatePath("/settings")
+	revalidatePath("/studio")
+	revalidatePath("/badges")
 	revalidatePath("/home")
 	revalidatePath(`/u/${profile.slug}`)
 	return { ok: true as const, profile }
 }
 
 export async function getPublicCreatorBySlug(slug: string) {
-	return prisma.creatorProfile.findUnique({
+	const profile = await prisma.creatorProfile.findUnique({
 		where: { slug },
 		include: {
 			campaigns: {
@@ -107,4 +109,12 @@ export async function getPublicCreatorBySlug(slug: string) {
 			},
 		},
 	})
+	if (!profile) return null
+
+	const badges = await prisma.creatorBadge.findMany({
+		where: { creatorProfileId: profile.id },
+		orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+	})
+
+	return { ...profile, badges }
 }

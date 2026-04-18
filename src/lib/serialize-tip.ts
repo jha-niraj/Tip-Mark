@@ -1,4 +1,10 @@
-import type { Tip, User, Campaign, CreatorProfile } from "@/generated/prisma/client"
+import type {
+	Tip,
+	User,
+	Campaign,
+	CreatorProfile,
+	CreatorBadge,
+} from "@/generated/prisma/client"
 
 export type SerializedTip = {
 	id: string
@@ -14,6 +20,12 @@ export type SerializedTip = {
 	supporter: { id: string; name: string | null; email: string } | null
 	creatorSlug?: string | null
 	creatorDisplayName?: string | null
+	badge: {
+		id: string
+		name: string
+		emoji: string | null
+		amountCents: number
+	} | null
 }
 
 export function serializeTip(
@@ -21,6 +33,7 @@ export function serializeTip(
 		supporter?: User | null
 		campaign?: Campaign | null
 		creatorProfile?: Pick<CreatorProfile, "slug" | "displayName"> | null
+		creatorBadge?: CreatorBadge | null
 	},
 ): SerializedTip {
 	return {
@@ -45,5 +58,13 @@ export function serializeTip(
 			: null,
 		creatorSlug: tip.creatorProfile?.slug ?? null,
 		creatorDisplayName: tip.creatorProfile?.displayName ?? null,
+		badge: tip.creatorBadge
+			? {
+					id: tip.creatorBadge.id,
+					name: tip.creatorBadge.name,
+					emoji: tip.creatorBadge.emoji,
+					amountCents: tip.creatorBadge.amountCents,
+				}
+			: null,
 	}
 }

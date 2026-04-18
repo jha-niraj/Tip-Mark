@@ -22,6 +22,8 @@ export type CreatorDashboardPayload = {
 		totalCardCents: number
 		activeCampaigns: number
 	}
+	/** Last 30 days, card tips only (USD cents per calendar day, UTC). */
+	raisedByDay: { day: string; cents: number }[]
 	recentTips: SerializedTip[]
 	campaigns: { id: string; title: string; status: string; goalAmountCents: number | null }[]
 }
@@ -45,6 +47,7 @@ export async function getCreatorDashboardData(): Promise<CreatorDashboardPayload
 				totalCardCents: 0,
 				activeCampaigns: 0,
 			},
+			raisedByDay: [],
 			recentTips: [],
 			campaigns: [],
 		}
@@ -74,7 +77,7 @@ export async function getCreatorDashboardData(): Promise<CreatorDashboardPayload
 				where: { creatorProfileId: profile.id },
 				orderBy: { createdAt: "desc" },
 				take: 8,
-				include: { supporter: true, campaign: true },
+				include: { supporter: true, campaign: true, creatorBadge: true },
 			}),
 			prisma.campaign.findMany({
 				where: { creatorProfileId: profile.id },
@@ -96,6 +99,33 @@ export async function getCreatorDashboardData(): Promise<CreatorDashboardPayload
 		_sum: { amountCents: true },
 	})
 
+	const thirtyDaysAgo = new Date()
+	thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30)
+
+	const cardTipsSeries = await prisma.tip.findMany({
+		where: {
+			creatorProfileId: profile.id,
+			rail: TipRail.STRIPE,
+			status: TipStatus.SUCCEEDED,
+			createdAt: { gte: thirtyDaysAgo },
+			amountCents: { not: null },
+		},
+		select: { amountCents: true, createdAt: true },
+	})
+
+	const byDay = new Map<string, number>()
+	for (const t of cardTipsSeries) {
+		const d = t.createdAt.toISOString().slice(0, 10)
+		byDay.set(d, (byDay.get(d) ?? 0) + (t.amountCents ?? 0))
+	}
+	const raisedByDay: { day: string; cents: number }[] = []
+	for (let i = 29; i >= 0; i--) {
+		const d = new Date()
+		d.setUTCDate(d.getUTCDate() - i)
+		const key = d.toISOString().slice(0, 10)
+		raisedByDay.push({ day: key, cents: byDay.get(key) ?? 0 })
+	}
+
 	return {
 		profile: {
 			id: profile.id,
@@ -112,9 +142,20 @@ export async function getCreatorDashboardData(): Promise<CreatorDashboardPayload
 			totalCardCents: cardSum._sum.amountCents ?? 0,
 			activeCampaigns: activeCampCount,
 		},
+		raisedByDay,
 		recentTips: recent.map(serializeTip),
 		campaigns,
 	}
+}
+
+export type SupporterBadgeEarned = {
+	tipId: string
+	earnedAt: string
+	badgeName: string
+	badgeEmoji: string | null
+	amountCents: number
+	creatorSlug: string
+	creatorDisplayName: string | null
 }
 
 export type SupporterDashboardPayload = {
@@ -124,6 +165,7 @@ export type SupporterDashboardPayload = {
 		cardTips: number
 		totalCardCents: number
 	}
+	badgeEarned: SupporterBadgeEarned[]
 	recentTips: SerializedTip[]
 }
 
@@ -133,7 +175,7 @@ export async function getSupporterDashboardData(): Promise<SupporterDashboardPay
 
 	const uid = session.user.id
 
-	const [tipsSent, solTips, cardTips, cardSum, recent] = await Promise.all([
+	const [tipsSent, solTips, cardTips, cardSum, recent, badgeTips] = await Promise.all([
 		prisma.tip.count({ where: { supporterUserId: uid } }),
 		prisma.tip.count({
 			where: { supporterUserId: uid, rail: TipRail.SOLANA, status: TipStatus.SUCCEEDED },
@@ -157,11 +199,37 @@ export async function getSupporterDashboardData(): Promise<SupporterDashboardPay
 				campaign: true,
 				creatorProfile: true,
 				supporter: true,
+				creatorBadge: true,
+			},
+		}),
+		prisma.tip.findMany({
+			where: {
+				supporterUserId: uid,
+				status: TipStatus.SUCCEEDED,
+				rail: TipRail.STRIPE,
+				creatorBadgeId: { not: null },
+			},
+			orderBy: { createdAt: "desc" },
+			take: 24,
+			include: {
+				creatorBadge: true,
+				creatorProfile: true,
 			},
 		}),
 	])
 
-	// serializeTip expects supporter on tip - for supporter view we need creator name from creatorProfile
+	const badgeEarned: SupporterBadgeEarned[] = badgeTips
+		.filter((t) => t.creatorBadge && t.creatorProfile)
+		.map((t) => ({
+			tipId: t.id,
+			earnedAt: t.createdAt.toISOString(),
+			badgeName: t.creatorBadge!.name,
+			badgeEmoji: t.creatorBadge!.emoji,
+			amountCents: t.amountCents ?? t.creatorBadge!.amountCents,
+			creatorSlug: t.creatorProfile!.slug,
+			creatorDisplayName: t.creatorProfile!.displayName,
+		}))
+
 	return {
 		stats: {
 			tipsSent,
@@ -169,6 +237,7 @@ export async function getSupporterDashboardData(): Promise<SupporterDashboardPay
 			cardTips,
 			totalCardCents: cardSum._sum.amountCents ?? 0,
 		},
+		badgeEarned,
 		recentTips: recent.map((t) => serializeTip(t)),
 	}
 }
