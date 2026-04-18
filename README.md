@@ -60,7 +60,7 @@ Badges are soul-bound (non-transferable) and permanent — proof you were there.
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/tipmark.git
+git clone https://github.com/jha-niraj/TipMark.git
 cd tipmark
 ```
 
