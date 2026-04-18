@@ -54,6 +54,7 @@ src/
 
 ## Documents in this folder
 
+- **[stripe.md](./stripe.md)** — **Stripe Checkout**, **`Tip` ledger**, **webhooks**, Connect, **env vars**, **local CLI** vs **production** Dashboard setup (code-aligned).
 - **[creator-plan.md](./creator-plan.md)** — creator journeys, pages, Sheets, Stripe touchpoints, schema model **names** (no DDL).
 - **[supporter-plan.md](./supporter-plan.md)** — supporter journeys, `/home` vs `/activity`, tipping flows, schema model **names**.
 
