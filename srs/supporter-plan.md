@@ -56,10 +56,10 @@ This avoids duplicating URLs and keeps bookmarks simple.
 
 ## Schema — model **names** (no field definitions)
 
-Shared with creator plan; supporter-specific additions may include:
+Shared with creator plan:
 
-- **`User`** — already; role **`SUPPORTER`** (default) vs **`CREATOR`**.
-- **`Tip`** / **`Payment`** — supporter’s user id when logged in; guest tips only if you add nullable supporter and capture email from Stripe.
+- **`User`** — role **`SUPPORTER`** (default) vs **`CREATOR`**; **`tipsSent`** relation points to unified **`Tip`** rows.
+- **`Tip`** — one model for **both** SOL and card: **`TipRail`**, optional **`supporterUserId`**, optional **`tipperWallet`** for wallet-only SOL tips, optional **`campaignId`** for card/campaign flows.
 - **`FavoriteCreator`** (optional) — supporter bookmarks a **`CreatorProfile`**.
 - **`Notification`** (optional) — tip confirmations, campaign updates.
 

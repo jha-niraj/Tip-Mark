@@ -51,18 +51,19 @@ No **`*/new`** routes for campaign creation.
 
 ---
 
-## Schema — model **names** to add or extend (no field definitions)
+## Schema — unified data model (conceptual; no DDL here)
 
-Existing concepts in the codebase may be renamed or extended; new names are **targets** for the Stripe phase:
+The database uses **one profile** and **one tip table** for both rails:
 
-- **`User`** — already present; extend for role, profile fields, Stripe account linkage ids.
-- **`CreatorProfile`** (or evolve existing **`Creator`**) — public slug, display name, bio, avatar, visibility, link to **`User`**.
-- **`Campaign`** — belongs to creator; title, description, goal, state (active/archived), optional dates.
-- **`Tip`** (or **`Payment`**) — card tip record: amount, currency, creator, optional campaign, supporter user optional, Stripe ids, status, created time.
-- **`StripeEvent`** (optional) — idempotent webhook processing audit.
-- **`Payout` / `BalanceSnapshot`** (optional) — if you need reporting beyond Stripe’s dashboard.
+- **`User`** — authentication, **`UserRole`** (`SUPPORTER` | `CREATOR`), links to optional **`CreatorProfile`** and outgoing **`Tip`** rows as supporter.
+- **`CreatorProfile`** — **single** public identity per creator: **`slug`**, display fields, **`solanaWallet`** (receive address), and **Stripe Connect** payout fields. Replaces the old split between a Solana-only `Creator` row and a separate card profile.
+- **`Campaign`** — optional fundraising buckets; card tips can reference a campaign; SOL tips typically do not.
+- **`Tip`** — **unified ledger** with **`TipRail`** (`SOLANA` | `STRIPE`): Solana fields (e.g. signature, `amountSol`, `tipperWallet`) vs Stripe fields (e.g. `amountCents`, Stripe ids, status). Same creator, supporter, and optional campaign relations for reporting.
+- **`TipRail` / `TipStatus`** — enums on **`Tip`** to branch UI and queries.
+- **`StripeEvent`** (optional) — idempotent webhook audit.
+- **`Payout` / `BalanceSnapshot`** (optional) — reporting beyond dashboards.
 
-Solana-specific models can remain in the database for later but are **not** used in this phase’s UI flows.
+Legacy Solana-only tables are **not** used going forward; migrate historical rows into **`Tip`** with `rail = SOLANA` if needed.
 
 ---
 

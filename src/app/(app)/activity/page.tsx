@@ -3,12 +3,15 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { History } from "lucide-react"
+import { listSupporterActivityTips } from "@/actions/tips"
+import { ActivityList } from "@/components/activity/activity-list"
 
-/** Supporter tip history (server shell). */
 export default async function ActivityPage() {
 	const session = await getServerSession(authOptions)
 	if (!session) redirect("/")
 	if (session.user.role !== "SUPPORTER") redirect("/home")
+
+	const tips = await listSupporterActivityTips()
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -20,20 +23,17 @@ export default async function ActivityPage() {
 						</div>
 						<h1 className="text-3xl font-bold tracking-tight">Activity</h1>
 						<p className="mt-2 max-w-lg text-muted-foreground leading-relaxed">
-							Every card tip you&apos;ve sent, with receipts and creator context.
+							Every SOL and card tip you&apos;ve sent (unified ledger).
 						</p>
 					</div>
-					<p className="text-sm text-muted-foreground">
-						<Link className="text-primary underline-offset-4 hover:underline" href="/home">
-							← Dashboard
-						</Link>
-					</p>
+					<Link
+						href="/home"
+						className="text-sm text-primary underline-offset-4 hover:underline"
+					>
+						← Dashboard
+					</Link>
 				</div>
-				<div className="rounded-2xl border border-dashed border-border bg-card/50 px-6 py-16 text-center">
-					<p className="text-muted-foreground">
-						Tip history will load here from server actions.
-					</p>
-				</div>
+				<ActivityList tips={tips} />
 			</main>
 		</div>
 	)

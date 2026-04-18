@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { UserRole } from "@/generated/prisma/client"
 import { prisma } from "@/lib/prisma"
 
 export const authOptions: NextAuthOptions = {
@@ -10,6 +11,7 @@ export const authOptions: NextAuthOptions = {
 			credentials: {
 				email: { label: "Email", type: "email" },
 				otp: { label: "Code", type: "text" },
+				role: { label: "Role", type: "text" },
 			},
 			async authorize(credentials) {
 				if (!credentials?.email || !credentials?.otp) return null
@@ -25,20 +27,21 @@ export const authOptions: NextAuthOptions = {
 
 				if (!otpRecord) return null
 
-				// Mark OTP as used
 				await prisma.otp.update({
 					where: { id: otpRecord.id },
 					data: { used: true },
 				})
 
-				// Find or create user
+				const desiredRole =
+					credentials.role === "CREATOR" ? UserRole.CREATOR : UserRole.SUPPORTER
+
 				let user = await prisma.user.findUnique({
 					where: { email: credentials.email },
 				})
 
 				if (!user) {
 					user = await prisma.user.create({
-						data: { email: credentials.email },
+						data: { email: credentials.email, role: desiredRole },
 					})
 				}
 
@@ -53,7 +56,7 @@ export const authOptions: NextAuthOptions = {
 	],
 	session: {
 		strategy: "jwt",
-		maxAge: 30 * 24 * 60 * 60, // 30 days
+		maxAge: 30 * 24 * 60 * 60,
 	},
 	pages: {
 		signIn: "/",

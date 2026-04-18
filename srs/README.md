@@ -1,11 +1,11 @@
-# TipMark — Platform architecture (Stripe-first)
+# TipMark — Platform architecture (Solana + Stripe)
 
-This folder describes how the app is structured around **card tips via Stripe**, **creators**, **supporters**, and **campaigns** (optional buckets supporters can tip toward). Web3/Solana is out of scope for this phase.
+This folder describes how the app is structured around **two tip rails** — **Solana** (on-chain SOL) and **card tips via Stripe** — using a **single creator profile** and a **unified tip ledger**. **Creators**, **supporters**, and **campaigns** (optional buckets for card tips) share the same routes and UI shell.
 
 ## Product shape
 
-- **Creators** run a public tip page, configure **Stripe Connect** (or similar) for payouts, create **campaigns** (goals, titles, optional amounts), and see analytics on **/home** and dedicated sections.
-- **Supporters** sign in, tip a creator (general or toward a campaign), and see history on **/home** and **activity**.
+- **Creators** run a public tip page with **one profile**: **Solana** receive wallet + **Stripe Connect** for cards; **campaigns** for card goals; analytics on **`/home`** and dedicated sections.
+- **Supporters** sign in, tip in **SOL** or by **card** (same **`Tip`** ledger, different flows), and see history on **`/home`** and **`/activity`**.
 - **Public** visitors can open a creator’s public URL **without logging in**; we still **encourage sign-in before completing a tip** (documented in supporter plan).
 
 ## Routing and rendering convention
