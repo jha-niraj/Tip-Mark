@@ -29,6 +29,7 @@ export function Navbar() {
 	const [mobileOpen, setMobileOpen] = useState(false)
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- client-only mount gate for theme toggle
 		setMounted(true)
 		const onScroll = () => setScrolled(window.scrollY > 16)
 		window.addEventListener("scroll", onScroll, { passive: true })

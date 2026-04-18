@@ -1,64 +1,67 @@
-// TipMark — Prisma Schema (Prisma 7)
-// Connection URL lives in prisma.config.ts → datasource.url
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+    provider = "prisma-client"
+    output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+    provider = "postgresql"
+}
+
+enum UserRole {
+    SUPPORTER
+    CREATOR
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+    id        String   @id @default(cuid())
+    email     String   @unique
+    name      String?
+    role      UserRole @default(SUPPORTER)
+    createdAt DateTime @default(now())
 
-  @@map("users")
+    @@map("users")
 }
 
 model Otp {
-  id        String   @id @default(cuid())
-  email     String
-  code      String
-  used      Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+    id        String   @id @default(cuid())
+    email     String
+    code      String
+    used      Boolean  @default(false)
+    expiresAt DateTime
+    createdAt DateTime @default(now())
 
-  @@index([email])
-  @@map("otps")
+    @@index([email])
+    @@map("otps")
 }
 
 model Creator {
-  id        Int      @id @default(autoincrement())
-  wallet    String   @unique
-  username  String   @unique
-  name      String?
-  bio       String?
-  avatarUrl String?
-  createdAt DateTime @default(now())
+    id        Int      @id @default(autoincrement())
+    wallet    String   @unique
+    username  String   @unique
+    name      String?
+    bio       String?
+    avatarUrl String?
+    createdAt DateTime @default(now())
 
-  tips      Tip[]
+    tips Tip[]
 
-  @@map("creators")
+    @@map("creators")
 }
 
 model Tip {
-  id        Int      @id @default(autoincrement())
-  txHash    String   @unique
-  tipper    String
-  creatorId Int
-  amountSol Decimal  @db.Decimal(18, 9)
-  message   String?
-  badgeTier String?
-  nftMint   String?
-  createdAt DateTime @default(now())
+    id        Int      @id @default(autoincrement())
+    txHash    String   @unique
+    tipper    String
+    creatorId Int
+    amountSol Decimal  @db.Decimal(18, 9)
+    message   String?
+    badgeTier String?
+    nftMint   String?
+    createdAt DateTime @default(now())
 
-  creator   Creator  @relation(fields: [creatorId], references: [id])
+    creator Creator @relation(fields: [creatorId], references: [id])
 
-  @@index([tipper])
-  @@index([creatorId])
-  @@map("tips")
+    @@index([tipper])
+    @@index([creatorId])
+    @@map("tips")
 }

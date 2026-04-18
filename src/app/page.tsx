@@ -9,19 +9,19 @@ import { CTA } from "@/components/landing/cta"
 import { Footer } from "@/components/footer"
 
 export default function LandingPage() {
-  return (
-    <>
-      <Navbar />
-      <main className="flex-1">
-        <Hero />
-        <StatsBar />
-        <Problem />
-        <HowItWorks />
-        <BadgeTiers />
-        <Comparison />
-        <CTA />
-      </main>
-      <Footer />
-    </>
-  )
+	return (
+		<>
+			<Navbar />
+			<main className="flex-1">
+				<Hero />
+				<StatsBar />
+				<Problem />
+				<HowItWorks />
+				<BadgeTiers />
+				<Comparison />
+				<CTA />
+			</main>
+			<Footer />
+		</>
+	)
 }

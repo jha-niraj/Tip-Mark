@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/input-otp"
 import { toast } from "sonner"
 import { ArrowLeft, Loader2, Mail, Zap } from "lucide-react"
+import { sendSignInOtp } from "@/actions/auth/send-sign-in-otp"
 
 interface SignInDialogProps {
   open: boolean
@@ -83,21 +84,16 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
     setError("")
   }
 
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSendOTP = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     setError("")
     setLoading(true)
 
     try {
-      const res = await fetch("/api/auth/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      })
-      const data = await res.json()
+      const result = await sendSignInOtp(email)
 
-      if (!res.ok) {
-        setError(data.error || "Failed to send code.")
+      if (!result.ok) {
+        setError(result.error)
       } else {
         toast.success("Code sent! Check your inbox.")
         goToOtp()
@@ -169,7 +165,7 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
                   </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSendOTP} className="space-y-4">
+                <form onSubmit={(ev) => void handleSendOTP(ev)} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="email">Email address</Label>
                     <div className="relative">
@@ -265,7 +261,8 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
                       <span>Resend code in {countdown}s</span>
                     ) : (
                       <button
-                        onClick={handleSendOTP}
+                        type="button"
+                        onClick={() => void handleSendOTP()}
                         className="text-primary hover:underline underline-offset-4"
                         disabled={loading}
                       >

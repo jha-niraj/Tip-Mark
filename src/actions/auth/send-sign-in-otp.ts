@@ -1,33 +1,36 @@
-import { NextRequest, NextResponse } from "next/server"
+"use server"
+
 import { Resend } from "resend"
 import { prisma } from "@/lib/prisma"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+	return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const { email } = await req.json()
+export type SendSignInOtpResult =
+	| { ok: true }
+	| { ok: false; error: string }
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: "Invalid email address" }, { status: 400 })
-    }
+export async function sendSignInOtp(email: string): Promise<SendSignInOtpResult> {
+	if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+		return { ok: false, error: "Invalid email address" }
+	}
 
-    const code = generateOTP()
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+	try {
+		const code = generateOTP()
+		const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
-    await prisma.otp.create({
-      data: { email, code, expiresAt },
-    })
+		await prisma.otp.create({
+			data: { email, code, expiresAt },
+		})
 
-    await resend.emails.send({
-      from: "TipMark <noreply@tipmark.xyz>",
-      to: email,
-      subject: `${code} — your TipMark sign-in code`,
-      html: `
+		await resend.emails.send({
+			from: "TipMark <noreply@tipmark.xyz>",
+			to: email,
+			subject: `${code} — your TipMark sign-in code`,
+			html: `
         <!DOCTYPE html>
         <html>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fffbf5; margin: 0; padding: 40px 20px;">
@@ -45,10 +48,10 @@ export async function POST(req: NextRequest) {
           </body>
         </html>
       `,
-    })
+		})
 
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: "Failed to send code. Try again." }, { status: 500 })
-  }
+		return { ok: true }
+	} catch {
+		return { ok: false, error: "Failed to send code. Try again." }
+	}
 }
